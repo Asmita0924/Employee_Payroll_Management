@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Payroll Management System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+    <!-- 1. Authentication Page -->
+    <div id="auth-page">
+        <div class="auth-card glass-panel">
+            <h1>EMPLOYEE PAYROLL</h1>
+            <p>Enterprise Management Portal</p>
+            <div id="login-error" style="color: var(--danger); font-size: 13px; margin-bottom: 15px; display: none;"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" class="form-control" placeholder="e.g., admin, eddard_hr" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-primary" id="login-btn">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Main Layout (Dashboard) -->
+    <div id="main-layout">
+        <!-- Sidebar Navigation -->
+        <sidebar class="glass-panel" style="border-radius: 0;">
+            <div class="logo">Payroll Portal</div>
+            <ul class="nav-menu">
+                <li class="nav-item active" onclick="switchTab('tab-dashboard')">
+                    <span>Dashboard</span>
+                </li>
+                <li class="nav-item" onclick="switchTab('tab-employees')">
+                    <span>Employees</span>
+                </li>
+                <li class="nav-item" onclick="switchTab('tab-departments')">
+                    <span>Departments</span>
+                </li>
+                <li class="nav-item" onclick="switchTab('tab-attendance')">
+                    <span>Attendance</span>
+                </li>
+                <li class="nav-item" onclick="switchTab('tab-leaves')">
+                    <span>Leaves</span>
+                </li>
+                <li class="nav-item" onclick="switchTab('tab-analytics')">
+                    <span>SQL Analytics</span>
+                </li>
+            </ul>
+            <div class="user-profile">
+                <div class="username" id="logged-username">Full Name</div>
+                <div class="role-tag" id="logged-role">Role Description</div>
+                <div class="logout-btn" onclick="logout()">Log Out</div>
+            </div>
+        </sidebar>
+
+        <!-- Main Workspace -->
+        <main>
+            <!-- Tab: Dashboard -->
+            <section id="tab-dashboard" class="tab-content active">
+                <div class="header-section">
+                    <div>
+                        <h1>Dashboard Overview</h1>
+                        <p style="color: var(--text-secondary); font-size: 14px;">Real-time metrics and salary slip generation</p>
+                    </div>
+                </div>
+                <div class="kpi-grid">
+                    <div class="kpi-card glass-panel blue">
+                        <span class="title">Active Headcount</span>
+                        <span class="value" id="kpi-headcount">5</span>
+                    </div>
+                    <div class="kpi-card glass-panel green">
+                        <span class="title">IT Headcount</span>
+                        <span class="value" id="kpi-it-headcount">3</span>
+                    </div>
+                    <div class="kpi-card glass-panel yellow">
+                        <span class="title">Total Departments</span>
+                        <span class="value" id="kpi-depts">4</span>
+                    </div>
+                </div>
+
+                <div class="glass-panel" style="padding: 24px; margin-bottom: 30px;">
+                    <h2 style="font-size: 16px; margin-bottom: 20px; color: var(--primary);">Quick Actions</h2>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="action-btn primary" onclick="openAddEmpModal()">+ Add New Employee</button>
+                        <button class="action-btn success" onclick="openGeneratePayrollModal()">Generate Batch Payroll</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Employees -->
+            <section id="tab-employees" class="tab-content">
+                <div class="header-section">
+                    <div>
+                        <h1>Employees Directory</h1>
+                        <p style="color: var(--text-secondary); font-size: 14px;">Manage corporate employee rosters</p>
+                    </div>
+                    <button class="action-btn primary" onclick="openAddEmpModal()">+ Add Employee</button>
+                </div>
+                <div class="glass-panel">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Designation</th>
+                                    <th>Department</th>
+                                    <th>Base Salary</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employees-table-body">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Departments -->
+            <section id="tab-departments" class="tab-content">
+                <div class="header-section">
+                    <div>
+                        <h1>Corporate Departments</h1>
+                        <p style="color: var(--text-secondary); font-size: 14px;">Configure corporate groups and department leads</p>
+                    </div>
+                </div>
+                <div class="glass-panel">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Department Name</th>
+                                    <th>Manager Name</th>
+                                    <th>Manager ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="departments-table-body">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Attendance -->
+            <section id="tab-attendance" class="tab-content">
+                <div class="header-section">
+                    <div>
+                        <h1>Attendance Registry</h1>
+                        <p style="color: var(--text-secondary); font-size: 14px;">Check-in / check-out tracker</p>
+                    </div>
+                    <button class="action-btn primary" onclick="openLogAttendanceModal()">Log Attendance</button>
+                </div>
+                <div class="glass-panel">
+                    <div style="padding: 20px 20px 0; display: flex; gap: 15px; align-items: center;">
+                        <label for="att-emp-id" style="font-size: 13px; color: var(--text-secondary);">Filter Employee ID:</label>
+                        <input type="number" id="att-emp-id" class="form-control" style="width: 100px; padding: 6px 10px;" value="3">
+                        <button class="action-btn primary" onclick="loadAttendanceHistory()">Query History</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Date</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Hours Worked</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-table-body">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Leaves -->
+            <section id="tab-leaves" class="tab-content">
+                <div class="header-section">
+                    <div>
+                        <h1>Leave Requests</h1>
+                        <p style="color: var(--text-secondary); font-size: 14px;">Process employee leave requests and approvals</p>
+                    </div>
+                    <button class="action-btn primary" onclick="openRequestLeaveModal()">Request Leave</button>
+                </div>
+                <div class="glass-panel">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Employee</th>
+                                    <th>Type</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaves-table-body">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: SQL Analytics -->
+            <section id="tab-analytics" class="tab-content">
+                <div class="header-section">
+                    <div>
+                        <h1>Advanced SQL Analytics</h1>
+                        <p style="color: var(--text-secondary); font-size: 14px;">Window functions, CTE hierarchies, and summaries</p>
+                    </div>
+                </div>
+                
+                <div class="analytics-grid">
+                    <!-- Analytics Card 1: Org Hierarchy -->
+                    <div class="analytics-card glass-panel">
+                        <h2>Org Hierarchy (Recursive CTE Chart)</h2>
+                        <div class="table-container" style="padding: 0;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Designation</th>
+                                        <th>Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analytics-hierarchy-body">
+                                    <!-- Loaded dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Card 2: Salaries Rank -->
+                    <div class="analytics-card glass-panel">
+                        <h2>Ranked Base Salaries (RANK() & DENSE_RANK())</h2>
+                        <div class="table-container" style="padding: 0;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Salary</th>
+                                        <th>Rank</th>
+                                        <th>Dense Rank</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analytics-rank-body">
+                                    <!-- Loaded dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analytics-grid">
+                    <!-- Analytics Card 3: Department payout summary -->
+                    <div class="analytics-card glass-panel" style="grid-column: span 2;">
+                        <h2>Department Payroll Summary (CTE aggregates)</h2>
+                        <div class="table-container" style="padding: 0;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Department</th>
+                                        <th>Processed Slips</th>
+                                        <th>Total Payout</th>
+                                        <th>Average Payout</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analytics-summary-body">
+                                    <!-- Loaded dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 3. Modals Definitions -->
+    
+    <!-- Modal: Add Employee -->
+    <div class="modal-overlay" id="modal-add-emp">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Add New Employee</h2>
+                <span class="modal-close" onclick="closeModal('modal-add-emp')">&times;</span>
+            </div>
+            <form id="add-emp-form">
+                <div class="form-group">
+                    <label for="emp-name">Employee Name</label>
+                    <input type="text" id="emp-name" class="form-control" required placeholder="e.g., Arya Stark">
+                </div>
+                <div class="form-group">
+                    <label for="emp-email">Email</label>
+                    <input type="email" id="emp-email" class="form-control" required placeholder="e.g., arya@payroll.com">
+                </div>
+                <div class="form-group">
+                    <label for="emp-phone">Phone</label>
+                    <input type="text" id="emp-phone" class="form-control" required placeholder="e.g., 111-222-3333">
+                </div>
+                <div class="form-group">
+                    <label for="emp-dept-id">Department ID</label>
+                    <input type="number" id="emp-dept-id" class="form-control" required value="2">
+                </div>
+                <div class="form-group">
+                    <label for="emp-designation">Designation</label>
+                    <input type="text" id="emp-designation" class="form-control" required placeholder="e.g., QA Engineer">
+                </div>
+                <div class="form-group">
+                    <label for="emp-joining-date">Joining Date</label>
+                    <input type="date" id="emp-joining-date" class="form-control" required value="2026-06-20">
+                </div>
+                <div class="form-group">
+                    <label for="emp-base-salary">Base Salary ($)</label>
+                    <input type="number" id="emp-base-salary" class="form-control" required value="6000">
+                </div>
+                <button type="submit" class="btn-primary">Submit Record</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Log Attendance -->
+    <div class="modal-overlay" id="modal-log-att">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Log Attendance</h2>
+                <span class="modal-close" onclick="closeModal('modal-log-att')">&times;</span>
+            </div>
+            <form id="log-att-form">
+                <div class="form-group">
+                    <label for="log-att-emp-id">Employee ID</label>
+                    <input type="number" id="log-att-emp-id" class="form-control" required value="3">
+                </div>
+                <div class="form-group">
+                    <label for="log-att-date">Date</label>
+                    <input type="date" id="log-att-date" class="form-control" required value="2026-06-20">
+                </div>
+                <div class="form-group">
+                    <label for="log-att-in">Check In Time</label>
+                    <input type="time" id="log-att-in" class="form-control" required value="09:00">
+                </div>
+                <div class="form-group">
+                    <label for="log-att-out">Check Out Time</label>
+                    <input type="time" id="log-att-out" class="form-control" required value="17:30">
+                </div>
+                <button type="submit" class="btn-primary">Register Check-In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Request Leave -->
+    <div class="modal-overlay" id="modal-req-leave">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Request Leave</h2>
+                <span class="modal-close" onclick="closeModal('modal-req-leave')">&times;</span>
+            </div>
+            <form id="req-leave-form">
+                <div class="form-group">
+                    <label for="leave-emp-id">Employee ID</label>
+                    <input type="number" id="leave-emp-id" class="form-control" required value="3">
+                </div>
+                <div class="form-group">
+                    <label for="leave-type">Leave Type</label>
+                    <select id="leave-type" class="form-control" required>
+                        <option value="SICK">SICK</option>
+                        <option value="CASUAL">CASUAL</option>
+                        <option value="ANNUAL">ANNUAL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="leave-start">Start Date</label>
+                    <input type="date" id="leave-start" class="form-control" required value="2026-06-21">
+                </div>
+                <div class="form-group">
+                    <label for="leave-end">End Date</label>
+                    <input type="date" id="leave-end" class="form-control" required value="2026-06-22">
+                </div>
+                <button type="submit" class="btn-primary">Submit Request</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Generate Batch Payroll -->
+    <div class="modal-overlay" id="modal-gen-payroll">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Generate Batch Payroll</h2>
+                <span class="modal-close" onclick="closeModal('modal-gen-payroll')">&times;</span>
+            </div>
+            <form id="gen-payroll-form">
+                <div class="form-group">
+                    <label for="payroll-month">Month (YYYY-MM)</label>
+                    <input type="text" id="payroll-month" class="form-control" required value="2026-06" placeholder="e.g., 2026-06">
+                </div>
+                <div class="form-group">
+                    <label for="payroll-ids">Employee IDs (JSON Array)</label>
+                    <input type="text" id="payroll-ids" class="form-control" required value="[1, 2, 3, 5]">
+                </div>
+                <button type="submit" class="btn-primary">Execute Batch Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js?v=2"></script>
+</body>
+</html>

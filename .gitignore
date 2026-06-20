@@ -1,0 +1,16 @@
+target/
+mysql-data/
+.mvn/
+*.class
+*.log
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+bin/
+build/
+*.jar
+*.war
+*.zip
+*.tar.gz
