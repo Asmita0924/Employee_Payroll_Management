@@ -3,7 +3,9 @@ const state = {
     token: localStorage.getItem('jwt_token') || null,
     username: localStorage.getItem('username') || null,
     role: localStorage.getItem('role') || null,
-    currentTab: 'tab-dashboard'
+    currentTab: 'tab-dashboard',
+    deptChartInstance: null,
+    salaryChartInstance: null
 };
 
 // API Base Call wrapper with JWT Injection
@@ -488,6 +490,9 @@ async function loadAnalytics() {
     rankBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Calculating salary distributions...</td></tr>';
     summaryBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Compiling department summaries...</td></tr>';
 
+    let rankData = [];
+    let summaryData = [];
+
     // 6.1 CTE Org Map
     try {
         const data = await apiRequest('/api/payroll/analytics/hierarchy');
@@ -513,6 +518,7 @@ async function loadAnalytics() {
     // 6.2 Rank base salaries
     try {
         const data = await apiRequest('/api/payroll/analytics/rank');
+        rankData = data || [];
         rankBody.innerHTML = '';
         if (data && data.length > 0) {
             data.forEach(row => {
@@ -535,6 +541,7 @@ async function loadAnalytics() {
     // 6.3 Department payout summaries
     try {
         const data = await apiRequest('/api/payroll/analytics/summary');
+        summaryData = data || [];
         summaryBody.innerHTML = '';
         if (data && data.length > 0) {
             data.forEach(row => {
@@ -552,6 +559,115 @@ async function loadAnalytics() {
         }
     } catch (err) {
         summaryBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--danger);">${err.message}</td></tr>`;
+    }
+
+    // Render interactive graphs
+    renderCharts(rankData, summaryData);
+}
+
+// Helper to render Chart.js graphs
+function renderCharts(rankData, summaryData) {
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js library is not loaded.');
+        return;
+    }
+
+    // 1. Department Payout Chart (Bar Chart)
+    const deptCtx = document.getElementById('dept-payout-chart');
+    if (deptCtx) {
+        if (state.deptChartInstance) {
+            state.deptChartInstance.destroy();
+        }
+
+        const labels = summaryData.map(row => row.department_name);
+        const payoutData = summaryData.map(row => row.total_payout);
+
+        state.deptChartInstance = new Chart(deptCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Monthly Payout ($)',
+                    data: payoutData,
+                    backgroundColor: 'rgba(56, 189, 248, 0.4)',
+                    borderColor: '#38bdf8',
+                    borderWidth: 2,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#f8fafc'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#94a3b8' },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Base Salaries Rank Chart (Horizontal Bar Chart)
+    const salaryCtx = document.getElementById('salary-rank-chart');
+    if (salaryCtx) {
+        if (state.salaryChartInstance) {
+            state.salaryChartInstance.destroy();
+        }
+
+        const limitedRankData = rankData.slice(0, 8);
+        const labels = limitedRankData.map(row => row.employee_name);
+        const salaryData = limitedRankData.map(row => row.base_salary);
+
+        state.salaryChartInstance = new Chart(salaryCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Base Monthly Salary ($)',
+                    data: salaryData,
+                    backgroundColor: 'rgba(74, 222, 128, 0.4)',
+                    borderColor: '#4ade80',
+                    borderWidth: 2,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#f8fafc'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#94a3b8' },
+                        beginAtZero: true
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
+        });
     }
 }
 

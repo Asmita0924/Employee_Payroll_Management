@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Payroll Management System</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -287,6 +288,24 @@
                                     <!-- Loaded dynamically -->
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analytics-grid" style="margin-top: 30px;">
+                    <!-- Chart Card 1: Department Payouts -->
+                    <div class="analytics-card glass-panel" style="min-height: 380px;">
+                        <h2>Department Payouts Visualization ($)</h2>
+                        <div style="position: relative; height: 280px; width: 100%; padding: 10px;">
+                            <canvas id="dept-payout-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart Card 2: Salaries Distribution -->
+                    <div class="analytics-card glass-panel" style="min-height: 380px;">
+                        <h2>Base Salaries Comparison ($)</h2>
+                        <div style="position: relative; height: 280px; width: 100%; padding: 10px;">
+                            <canvas id="salary-rank-chart"></canvas>
                         </div>
                     </div>
                 </div>
